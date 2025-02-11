@@ -20,7 +20,7 @@ export default defineConfig({
   reporter: "html",
   timeout: 5000,
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: "http://127.0.0.1:5173",
     trace: "on-first-retry",
   },
 
