@@ -144,3 +144,125 @@ test("purchase with login", async ({ page }) => {
   // Check balance
   await expect(page.getByText("0.008")).toBeVisible();
 });
+
+test("admin", async ({ page }) => {
+  await page.route("*/**/api/auth", async (route) => {
+    const loginReq = {
+      email: "a@jwt.com",
+      password: "admin",
+    };
+    const loginRes = {
+      user: { id: 1, name: "常用名字", email: "a@jwt.com", roles: [{ role: "admin" }] },
+      token: "abobby123",
+    };
+    expect(route.request().method()).toBe("PUT");
+    expect(route.request().postDataJSON()).toMatchObject(loginReq);
+    await route.fulfill({ json: loginRes });
+  });
+
+  await page.route("*/**/api/franchise", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({
+        json: [
+          {
+            id: 1,
+            name: "My new cool franchise",
+            admins: [{ id: 1, name: "常用名字", email: "a@jwt.com" }],
+            stores: [{ id: 1, name: "The cool store", totalRevenue: 0 }],
+          },
+        ],
+      });
+    } else if (route.request().method() === "POST") {
+      expect(route.request().postDataJSON()).toMatchObject({
+        stores: [],
+        id: "",
+        name: "My new cool franchise",
+        admins: [{ email: "a@jwt.com" }],
+      });
+      await route.fulfill({
+        json: {
+          stores: [],
+          id: 1,
+          name: "My new cool franchise",
+          admins: [{ email: "a@jwt.com", id: 1, name: "常用名字" }],
+        },
+      });
+    }
+  });
+
+  await page.route("*/**/api/franchise/1", async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({
+        json: [
+          {
+            id: 1,
+            name: "My new cool franchise",
+            admins: [{ id: 1, name: "常用名字", email: "a@jwt.com" }],
+            stores: [{ id: 1, name: "The cool store", totalRevenue: 0 }],
+          },
+        ],
+      });
+    } else if (route.request().method() === "DELETE") {
+      await route.fulfill({ json: { message: "franchise deleted" } });
+    }
+  });
+
+  await page.route("*/**/api/franchise/1/store", async (route) => {
+    expect(route.request().method()).toBe("POST");
+    expect(route.request().postDataJSON()).toMatchObject({
+      id: "",
+      name: "The cool store",
+    });
+    await route.fulfill({
+      json: { id: 1, name: "The cool store", franchiseId: 1 },
+    });
+  });
+
+  await page.route("*/**/api/franchise/1/store/1", async (route) => {
+    expect(route.request().method()).toBe("DELETE");
+    await route.fulfill({ json: { message: "store deleted" } });
+  });
+
+  await page.goto("/");
+
+  await page.getByRole("link", { name: "Login" }).click();
+  await page.getByRole("textbox", { name: "Email address" }).click();
+  await page.getByRole("textbox", { name: "Email address" }).fill("a@jwt.com");
+  await page.getByRole("textbox", { name: "Password" }).click();
+  await page.getByRole("textbox", { name: "Password" }).fill("admin");
+  await page.getByRole("button", { name: "Login" }).click();
+
+  await page.getByRole("link", { name: "Admin" }).click();
+  await expect(page.getByRole("heading")).toContainText("Mama Ricci's kitchen");
+  await page.getByRole("button", { name: "Add Franchise" }).click();
+  await expect(page.getByRole("heading")).toContainText("Create franchise");
+  await page.getByRole("textbox", { name: "franchise name" }).click();
+  await page.getByRole("textbox", { name: "franchise name" }).fill("My new cool franchise");
+  await page.getByRole("textbox", { name: "franchisee admin email" }).click();
+  await page.getByRole("textbox", { name: "franchisee admin email" }).fill("a@jwt.com");
+  await page.getByRole("button", { name: "Create" }).click();
+
+  await expect(page.getByRole("heading")).toContainText("Mama Ricci's kitchen");
+  await expect(page.locator("tbody")).toContainText("My new cool franchise");
+  await expect(page.locator("tbody")).toContainText("常用名字");
+  await expect(page.getByTestId("close-franchise")).toBeVisible();
+
+  await page.getByRole("link", { name: "Franchise" }).click();
+  await page.getByRole("button", { name: "Create store" }).click();
+  await page.getByRole("textbox", { name: "store name" }).click();
+  await page.getByRole("textbox", { name: "store name" }).fill("The cool store");
+  await page.getByRole("button", { name: "Create" }).click();
+
+  await expect(page.locator("tbody")).toContainText("The cool store");
+  await expect(page.locator("tbody")).toContainText("0 ₿");
+  await expect(page.getByRole("button", { name: "Close" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Close" }).click();
+  await expect(page.getByRole("heading")).toContainText("Sorry to see you go");
+  await page.getByRole("button", { name: "Close" }).click();
+
+  await page.getByRole("link", { name: "Admin" }).click();
+  await page.getByTestId("close-franchise").click();
+  await expect(page.getByRole("heading")).toContainText("Sorry to see you go");
+  await page.getByRole("button", { name: "Close" }).click();
+});

@@ -1,11 +1,11 @@
-import React from 'react';
-import View from './view';
-import { useNavigate } from 'react-router-dom';
-import NotFound from './notFound';
-import Button from '../components/button';
-import { pizzaService } from '../service/service';
-import { Franchise, Role, Store, User } from '../service/pizzaService';
-import { TrashIcon } from '../icons';
+import React from "react";
+import View from "./view";
+import { useNavigate } from "react-router-dom";
+import NotFound from "./notFound";
+import Button from "../components/button";
+import { pizzaService } from "../service/service";
+import { Franchise, Role, Store, User } from "../service/pizzaService";
+import { TrashIcon } from "../icons";
 
 interface Props {
   user: User | null;
@@ -22,15 +22,15 @@ export default function AdminDashboard(props: Props) {
   }, [props.user]);
 
   function createFranchise() {
-    navigate('/admin-dashboard/create-franchise');
+    navigate("/admin-dashboard/create-franchise");
   }
 
   function closeFranchise(franchise: Franchise) {
-    navigate('/admin-dashboard/close-franchise', { state: { franchise: franchise } });
+    navigate("/admin-dashboard/close-franchise", { state: { franchise: franchise } });
   }
 
   function closeStore(franchise: Franchise, store: Store) {
-    navigate('/admin-dashboard/close-store', { state: { franchise: franchise, store: store } });
+    navigate("/admin-dashboard/close-store", { state: { franchise: franchise, store: store } });
   }
 
   let response = <NotFound />;
@@ -48,7 +48,7 @@ export default function AdminDashboard(props: Props) {
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="uppercase text-neutral-100 bg-slate-400 border-b-2 border-gray-500">
                         <tr>
-                          {['Franchise', 'Franchisee', 'Store', 'Revenue', 'Action'].map((header) => (
+                          {["Franchise", "Franchisee", "Store", "Revenue", "Action"].map((header) => (
                             <th key={header} scope="col" className="px-6 py-3 text-center text-xs font-medium">
                               {header}
                             </th>
@@ -59,15 +59,22 @@ export default function AdminDashboard(props: Props) {
                         return (
                           <tbody key={findex} className="divide-y divide-gray-200">
                             <tr className="border-neutral-500 border-t-2">
-                              <td className="text-start px-2 whitespace-nowrap text-l font-mono text-orange-600">{franchise.name}</td>
-                              <td className="text-start px-2 whitespace-nowrap text-sm font-normal text-gray-800" colSpan={3}>
-                                {franchise.admins?.map((o) => o.name).join(', ')}
+                              <td className="text-start px-2 whitespace-nowrap text-l font-mono text-orange-600">
+                                {franchise.name}
+                              </td>
+                              <td
+                                className="text-start px-2 whitespace-nowrap text-sm font-normal text-gray-800"
+                                colSpan={3}
+                              >
+                                {franchise.admins?.map((o) => o.name).join(", ")}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-end text-sm font-medium">
                                 <button
+                                  data-testid="close-franchise"
                                   type="button"
                                   className="px-2 py-1 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-1 border-orange-400 text-orange-400  hover:border-orange-800 hover:text-orange-800"
-                                  onClick={() => closeFranchise(franchise)}>
+                                  onClick={() => closeFranchise(franchise)}
+                                >
                                   <TrashIcon />
                                   Close
                                 </button>
@@ -80,12 +87,16 @@ export default function AdminDashboard(props: Props) {
                                   <td className="text-end px-2 whitespace-nowrap text-sm text-gray-800" colSpan={3}>
                                     {store.name}
                                   </td>
-                                  <td className="text-end px-2 whitespace-nowrap text-sm text-gray-800">{store.totalRevenue?.toLocaleString()} ₿</td>
+                                  <td className="text-end px-2 whitespace-nowrap text-sm text-gray-800">
+                                    {store.totalRevenue?.toLocaleString()} ₿
+                                  </td>
                                   <td className="px-6 py-4 whitespace-nowrap text-end text-sm font-medium">
                                     <button
+                                      data-testid="close-store"
                                       type="button"
                                       className="px-2 py-1 inline-flex items-center gap-x-2 text-sm font-semibold rounded-lg border border-1 border-orange-400 text-orange-400 hover:border-orange-800 hover:text-orange-800"
-                                      onClick={() => closeStore(franchise, store)}>
+                                      onClick={() => closeStore(franchise, store)}
+                                    >
                                       <TrashIcon />
                                       Close
                                     </button>
