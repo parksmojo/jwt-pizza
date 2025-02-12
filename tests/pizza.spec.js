@@ -6,6 +6,49 @@ test("home page", async ({ page }) => {
   expect(await page.title()).toBe("JWT Pizza");
 });
 
+test("register, view about, logout", async ({ page }) => {
+  await page.route("*/**/api/auth", async (route) => {
+    if (route.request().method() === "POST") {
+      const registerReq = { name: "Reggy", email: "r@jwt.com", password: "r" };
+      const registerRes = {
+        user: { id: 6, name: "Reggy", email: "r@jwt.com", roles: [{ role: "diner" }] },
+        token: "abcdefg",
+      };
+      expect(route.request().postDataJSON()).toMatchObject(registerReq);
+      await route.fulfill({ json: registerRes });
+    } else if (route.request().method() === "DELETE") {
+      const logoutRes = { message: "logout successful" };
+      // await new Promise((resolve) => setTimeout(resolve, 500));
+      await route.fulfill({ json: logoutRes });
+    } else {
+      expect(false).toBe(true);
+    }
+  });
+
+  await page.goto("/");
+
+  await page.getByRole("link", { name: "Register" }).click();
+
+  await page.getByRole("textbox", { name: "Full name" }).click();
+  await page.getByRole("textbox", { name: "Full name" }).fill("Reggy");
+
+  await page.getByRole("textbox", { name: "Email address" }).click();
+  await page.getByRole("textbox", { name: "Email address" }).fill("r@jwt.com");
+
+  await page.getByRole("textbox", { name: "Password" }).click();
+  await page.getByRole("textbox", { name: "Password" }).fill("r");
+
+  await page.getByRole("button", { name: "Register" }).click();
+  await expect(page.getByLabel("Global")).toContainText("R");
+
+  await page.getByRole("link", { name: "About" }).click();
+  await expect(page.getByRole("main")).toContainText("The secret sauce");
+
+  await page.getByRole("link", { name: "Logout" }).click();
+  // await expect(page.getByText("Logging out")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Register" })).toBeVisible();
+});
+
 test("purchase with login", async ({ page }) => {
   await page.route("*/**/api/order/menu", async (route) => {
     const menuRes = [
